@@ -11,7 +11,9 @@ import Module from '../__module';
 import $ from '../dom';
 import * as _ from '../utils';
 import Blocks from '../blocks';
+import { MetaDataBlock } from '../../../types/data-formats/block-data';
 import { BlockToolConstructable, BlockToolData, PasteEvent } from '../../../types';
+import mixin from '../../../types/tools/mixin';
 
 /**
  * @typedef {BlockManager} BlockManager
@@ -216,10 +218,11 @@ export default class BlockManager extends Module {
    * @param {object} options - block creation options
    * @param {string} options.tool - tools passed in editor config {@link EditorConfig#tools}
    * @param {BlockToolData} [options.data] - constructor params
+   * @param {MetaDataBlock} [options.metadata] - constructor params
    *
    * @returns {Block}
    */
-  public composeBlock({ tool, data = {} }: {tool: string; data?: BlockToolData}): Block {
+  public composeBlock({ tool, data = {} , metadata = {} }: {tool: string; data?: BlockToolData; metadata?: MetaDataBlock}): Block {
     const readOnly = this.Editor.ReadOnly.isEnabled;
     const settings = this.Editor.Tools.getToolSettings(tool);
     const Tool = this.Editor.Tools.available[tool] as BlockToolConstructable;
@@ -230,6 +233,7 @@ export default class BlockManager extends Module {
       settings,
       api: this.Editor.API,
       readOnly,
+      metadata,
     });
 
     if (!readOnly) {
@@ -245,6 +249,7 @@ export default class BlockManager extends Module {
    * @param {object} options - insert options
    * @param {string} options.tool - plugin name, by default method inserts the default block type
    * @param {object} options.data - plugin data
+   * @param {object} options.metadata - plugin metadata
    * @param {number} options.index - index where to insert new Block
    * @param {boolean} options.needToFocus - flag shows if needed to update current Block index
    * @param {boolean} options.replace - flag shows if block by passed index should be replaced with inserted one
@@ -254,12 +259,14 @@ export default class BlockManager extends Module {
   public insert({
     tool = this.config.defaultBlock,
     data = {},
+    metadata = {},
     index,
     needToFocus = true,
     replace = false,
   }: {
     tool?: string;
     data?: BlockToolData;
+    metadata?: MetaDataBlock;
     index?: number;
     needToFocus?: boolean;
     replace?: boolean;
@@ -270,9 +277,12 @@ export default class BlockManager extends Module {
       newIndex = this.currentBlockIndex + (replace ? 0 : 1);
     }
 
+    metadata = (metadata === null) ? mixin.createMeta() : metadata;
+
     const block = this.composeBlock({
       tool,
       data,
+      metadata,
     });
 
     this._blocks.insert(newIndex, block, replace);

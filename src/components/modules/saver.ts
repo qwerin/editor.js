@@ -59,10 +59,12 @@ export default class Saver extends Module {
   private async getSavedData(block: Block): Promise<ValidatedData> {
     const blockData = await block.save();
     const isValid = blockData && await block.validate(blockData.data);
+    const metadata = await block.metadata;
 
     return {
       ...blockData,
       isValid,
+      metadata,
     };
   }
 
@@ -78,7 +80,7 @@ export default class Saver extends Module {
 
     _.log('[Editor.js saving]:', 'groupCollapsed');
 
-    allExtractedData.forEach(({ tool, data, time, isValid }) => {
+    allExtractedData.forEach(({ tool, data, time, isValid, metadata }) => {
       totalTime += time;
 
       /**
@@ -107,6 +109,7 @@ export default class Saver extends Module {
       blocks.push({
         type: tool,
         data,
+        metadata
       });
     });
 

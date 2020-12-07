@@ -10,7 +10,7 @@ import {
   ToolSettings
 } from '../../../types';
 
-import { SavedData } from '../../../types/data-formats';
+import { MetaDataBlock, SavedData } from '../../../types/data-formats';
 import $ from '../dom';
 import * as _ from '../utils';
 import ApiModules from '../modules/api';
@@ -22,6 +22,7 @@ import MoveUpTune from '../block-tunes/block-tune-move-up';
 import DeleteTune from '../block-tunes/block-tune-delete';
 import MoveDownTune from '../block-tunes/block-tune-move-down';
 import SelectionUtils from '../selection';
+import mixin from '../../../types/tools/mixin';
 
 /**
  * Interface describes Block class constructor argument
@@ -56,6 +57,11 @@ interface BlockConstructorOptions {
    * This flag indicates that the Block should be constructed in the read-only mode.
    */
   readOnly: boolean;
+
+  /**
+   * Meta Object
+   */
+  metadata: MetaDataBlock;
 }
 
 /**
@@ -138,6 +144,12 @@ export default class Block {
   public tunes: BlockTune[];
 
   /**
+   * Meta Object
+   */
+  public metadata: MetaDataBlock;
+
+
+  /**
    * Tool's user configuration
    */
   public readonly config: ToolConfig;
@@ -205,6 +217,7 @@ export default class Block {
    * @param {ToolSettings} options.settings - default tool's config
    * @param options.api - Editor API module for pass it to the Block Tunes
    * @param {boolean} options.readOnly - Read-Only flag
+   * @param {MetaDataBlock} options.metadata
    */
   constructor({
     name,
@@ -213,6 +226,7 @@ export default class Block {
     settings,
     api,
     readOnly,
+    metadata,
   }: BlockConstructorOptions) {
     this.name = name;
     this.class = Tool;
@@ -220,6 +234,7 @@ export default class Block {
     this.config = settings.config || {};
     this.api = api;
     this.blockAPI = new BlockAPI(this);
+    this.metadata = metadata;
 
     this.mutationObserver = new MutationObserver(this.didMutated);
 
@@ -681,9 +696,15 @@ export default class Block {
     const wrapper = $.make('div', Block.CSS.wrapper) as HTMLDivElement,
         contentNode = $.make('div', Block.CSS.content),
         pluginsContent = this.tool.render();
+    if (this.metadata.id == '') {
+      this.metadata = this.metadata;
+    } else {
+      this.metadata = mixin.createMeta();
+    }
 
     contentNode.appendChild(pluginsContent);
     wrapper.appendChild(contentNode);
+    wrapper.setAttribute('id', this.metadata.id );
 
     return wrapper;
   }
